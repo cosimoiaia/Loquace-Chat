@@ -6,6 +6,9 @@ from kivy.uix.gridlayout import GridLayout
 from kivy.uix.boxlayout import BoxLayout
 from kivy.core.window import Window
 from kivy.uix.behaviors.focus import FocusBehavior
+from kivy.uix.progressbar import ProgressBar
+from kivy.uix.popup import Popup
+from kivy.clock import Clock
 from llama_cpp import Llama
 from icecream.icecream import ic
 
@@ -13,10 +16,11 @@ from icecream.icecream import ic
 class ChatApp(App):
     def __init__(self, **kwargs):
         super().__init__()
+        self.progress_bar = None
         self.send_button = None
         self.user_input = None
         self.down_bar = None
-        self.message_label = None
+        self.message_text = None
         self.layout = None
         self.llm = None
         self.history = []
@@ -27,18 +31,24 @@ class ChatApp(App):
 
         self.layout = GridLayout()
         self.layout.cols = 1
+        self.layout.rows = 2
+        # self.progress_bar = ProgressBar(max=100)
+        # self.progress_bar.value = 0
+
         # create message label
-        self.message_label = Label(size_hint_y=0.9)
-        self.layout.add_widget(self.message_label)
+        self.message_text = TextInput(size_hint_y=8.5, font_size=18)
+        self.message_text.multiline=True
+        self.message_text.readonly = True
+        self.layout.add_widget(self.message_text)
 
         # create text input field for user to enter messages
         self.down_bar = BoxLayout()
-        self.user_input = TextInput(multiline=False, size_hint_y=0.1)
+        self.user_input = TextInput(multiline=False, size_hint_y=1, font_size=20)
         self.user_input.bind(on_text_validate=self.send_message)
         self.down_bar.add_widget(self.user_input)
 
         # create send button
-        self.send_button = Button(text="Send", size_hint_y=0.1, size_hint_x=0.2)
+        self.send_button = Button(text="Send", size_hint_y=1, size_hint_x=0.2)
         self.send_button.bind(on_press=self.send_message)
         self.down_bar.add_widget(self.send_button)
 
@@ -53,7 +63,7 @@ class ChatApp(App):
             return
 
         # add message to the UI
-        self.message_label.text += "\nYou: " + message
+        self.message_text.text += "\nUtente: " + message
 
         # generate a response from the LLM
         self.history.append({"role": "user", "content": message})
@@ -62,13 +72,14 @@ class ChatApp(App):
         ic(output)
 
         # Update label with response
-        self.message_label.text += "\nLoquace: " + output['choices'][0]['message']['content']
+        self.message_text.text += "\nLoquace: " + output['choices'][0]['message']['content']
         self.history.append(output['choices'][0]['message'])
 
         # clear the input field
         self.user_input.text = ""
 
     def on_start(self):
+        # Set the app background
         # Focus the text input field when the app starts
         Window.bind(on_key_down=self.on_key_down)
         self.user_input.focus = True
