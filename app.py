@@ -19,6 +19,7 @@ class ChatApp(App):
         self.message_label = None
         self.layout = None
         self.llm = None
+        self.history = []
 
     def build(self):
         # Load the gguf model
@@ -55,13 +56,14 @@ class ChatApp(App):
         self.message_label.text += "\nYou: " + message
 
         # generate a response from the LLM
-        output = self.llm.create_chat_completion(messages=[{"role": "user",
-                                                            "content": message}],
+        self.history.append({"role": "user", "content": message})
+        output = self.llm.create_chat_completion(messages=self.history,
                                                  max_tokens=64, temperature=0.2)
         ic(output)
 
         # Update label with response
         self.message_label.text += "\nLoquace: " + output['choices'][0]['message']['content']
+        self.history.append(output['choices'][0]['message'])
 
         # clear the input field
         self.user_input.text = ""
