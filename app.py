@@ -22,7 +22,7 @@ class ChatApp(App):
 
     def build(self):
         # Load the gguf model
-        self.llm = Llama(model_path="/home/mimmo/LLM/Loquace-7b-mistral-q8_0.gguf")
+        self.llm = Llama(model_path="/home/mimmo/LLM/Loquace-7b-mistral-q8_0.gguf", n_threads=8)
 
         self.layout = GridLayout()
         self.layout.cols = 1
@@ -55,11 +55,13 @@ class ChatApp(App):
         self.message_label.text += "\nYou: " + message
 
         # generate a response from the LLM
-        output = self.llm(message, max_tokens=64, echo=False)
-        ic(output['choices'][0]['text'])
+        output = self.llm.create_chat_completion(messages=[{"role": "user",
+                                                            "content": message}],
+                                                 max_tokens=64, temperature=0.2)
+        ic(output)
 
         # Update label with response
-        self.message_label.text += "\nLoquace: " + output['choices'][0]['text']
+        self.message_label.text += "\nLoquace: " + output['choices'][0]['message']['content']
 
         # clear the input field
         self.user_input.text = ""
